@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-tw">
 
 <head>
   <meta charset="UTF-8">
@@ -14,51 +14,87 @@
 
 
 
-  <div ng-app="myShoppingList" ng-controller="myCtrl" class="ng-cloak">
-    add item<input type="text" ng-model="new_product" ng-keypress="onInputEnterKeyDown($event)">
+  <div ng-app="todoList02" ng-controller="myCtrl as ctrl" class="ng-cloak">
+    add item<input type="text" ng-model="ctrl.new_product" ng-keypress="ctrl.onInputEnterKeyDown($event)">
+    <button ng-click="ctrl.addProduct()">add</button>
     <ul>
-      <li ng-repeat="item in products track by $index">
+      <li ng-repeat="item in ctrl.products track by $index">
         {{ item }}
-        <button>edit</button>
-        <button ng-click="removeProduct($index)">remove</button>
+        <div ng-show="ctrl.editable!==$index">
+          <button ng-click="ctrl.editable=$index;">edit</button>
+          <button ng-click="ctrl.removeProduct($index)">remove</button>
+        </div>
+        <div ng-if="ctrl.editable==$index">
+          <input id="input_edit_product_{{ $index }}" type="text" value="{{ item }}">
+          <button ng-click="ctrl.updateProduct('input_edit_product_'+$index,$index)">update</button>
+          <button ng-click="ctrl.cancelEdit()">cancel</button>
+        </div>
       </li>
     </ul>
   </div>
-  
+
 
   <script>
-    var app = angular.module("myShoppingList", []);
-  
-    app.controller("myCtrl", function ($scope) {
+    var app = angular.module("todoList02", []);
 
-      $scope.new_product = "";
-      $scope.products = [
+    app.controller("myCtrl", function () {
+      var self = this;
+
+      self.editable = null;
+      self.new_product = "";
+      self.products = [
         "milk",
         "bread",
         "cheese"
       ];
-      $scope.onInputEnterKeyDown = function (keyEvent) {
+      self.clearNeewProductInput = function () {
+        self.new_product = null;
+      }
+      self.onInputEnterKeyDown = function (keyEvent) {
         if (keyEvent.which == 13) {
 
-          is_product_valid = $scope.validateProduct();
+          is_product_valid = self.validateProduct();
           if (!is_product_valid) return;
-          $scope.addProduct();
+          self.addProduct(self.new_product);
+          self.clearNeewProductInput();
 
 
         }
       }
-      $scope.addProduct = function () {
-        $scope.products.unshift($scope.new_product);
-        $scope.new_product=null;
+      self.addProduct = function (new_product) {
+        if (!self.validateProduct(new_product)) {
+          return;
+        } else {
+          console.log(new_product);
+          self.products.unshift(new_product);
+          self.clearNeewProductInput();
+        }
       }
-      $scope.validateProduct = function () {
-        if (!$scope.new_product) {
+      self.validateProduct = function (product_name) {
+        const regex = /^[\S]+.*/;
+        if (!regex.test(product_name)) {
           return false;
         }
         return true;
       }
-      $scope.removeProduct = function($index){
-        $scope.products.splice($index,1);
+      self.removeProduct = function (index) {
+        self.products.splice(index, 1);
+      }
+      self.updateProduct = function (input_id, index) {
+        let input = document.querySelector(`#${input_id}`);
+        let new_product_value = input.value;
+
+        self.editable = null;
+
+        if (!self.validateProduct(new_product_value)) {
+          return;
+        }
+        self.products[index] = new_product_value;
+
+      }
+      self.cancelEdit = function () {
+        self.editable = null;
+        return;
       }
 
     })
